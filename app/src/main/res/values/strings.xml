@@ -1,0 +1,41 @@
+<resources>
+    <string name="app_name">M4DiTV Lite</string>
+    <string name="search_hint">Cari channel...</string>
+    <string name="tab_all">Semua</string>
+    <string name="tab_favorites">Favorit</string>
+    
+    <!-- Loading states -->
+    <string name="loading_playlist">Memuat playlist default…</string>
+    <string name="loading_custom_playlist">Memuat playlist…</string>
+    <string name="fetch_failed">Gagal memuat playlist</string>
+    <string name="retry">Coba Lagi</string>
+    <string name="no_channel_found">Tidak ada channel ditemukan</string>
+    <string name="no_favorite_found">Belum ada channel favorit</string>
+
+    <!-- Playlist dialog -->
+    <string name="add_playlist_title">Tambah Playlist Baru</string>
+    <string name="input_playlist_name_hint">Nama Playlist</string>
+    <string name="playlist_name_required">Nama playlist harus diisi</string>
+    <string name="input_playlist_url_hint">URL Playlist M3U</string>
+    <string name="input_playlist_paste_hint">Tempel isi file M3U di sini…</string>
+    <string name="browse_file_button">Pilih File M3U</string>
+    <string name="file_selected_text">Terpilih: %1$s</string>
+    <string name="no_file_selected">Belum ada file terpilih</string>
+    <string name="add_button">Tambah</string>
+    <string name="cancel_button">Batal</string>
+    
+    <!-- Tab labels in dialog -->
+    <string name="add_tab_url">URL</string>
+    <string name="add_tab_paste">TEMPEL</string>
+    <string name="add_tab_file">FILE</string>
+
+    <!-- Toast & logs -->
+    <string name="playlist_added_success">Playlist berhasil ditambahkan!</string>
+    <string name="invalid_m3u">Format file M3U tidak valid atau kosong</string>
+    <string name="added_to_favorites">Ditambahkan ke favorit</string>
+    <string name="removed_from_favorites">Dihapus dari favorit</string>
+    <string name="long_press_tip">Tekan lama untuk memfavoritkan channel</string>
+    <string name="connection_error">Tidak ada koneksi internet</string>
+    
+    <string name="developer_brand">M4DI~UciH4</string>
+</resources>

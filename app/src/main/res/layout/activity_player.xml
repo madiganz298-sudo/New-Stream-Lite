@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <!-- ExoPlayer View surface -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:use_controller="false"
+        app:surface_type="surface_view" />
+
+    <!-- Buffering Progress Spinner -->
+    <ProgressBar
+        android:id="@+id/player_buffering"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/gold"
+        android:visibility="gone" />
+
+    <!-- Custom Player Overlay Controls -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/player_controls_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/overlay_control">
+
+        <!-- Top Header Panel -->
+        <LinearLayout
+            android:id="@+id/player_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/shadow_top"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:id="@+id/btn_player_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_back"
+                app:tint="@color/white"
+                android:contentDescription="Kembali" />
+
+            <TextView
+                android:id="@+id/txt_player_channel_name"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Nama Channel"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:shadowColor="@color/black"
+                android:shadowRadius="3"
+                android:shadowDx="1"
+                android:shadowDy="1" />
+        </LinearLayout>
+
+        <!-- Center Controls -->
+        <ImageButton
+            android:id="@+id/btn_player_play_pause"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="@drawable/circle_thumbnail_bg"
+            android:backgroundTint="@color/gold"
+            android:src="@drawable/ic_pause"
+            app:tint="@color/black"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:contentDescription="Play atau Pause" />
+
+        <!-- Bottom Panel -->
+        <LinearLayout
+            android:id="@+id/player_footer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/shadow_bottom"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_volume_up"
+                app:tint="@color/white"
+                android:contentDescription="Volume Indicator" />
+
+            <TextView
+                android:id="@+id/txt_player_group"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:text="Grup"
+                android:textColor="@color/gold"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txt_live_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/badge_bg"
+                android:backgroundTint="@color/color_error"
+                android:text="LIVE"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:textSize="11sp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

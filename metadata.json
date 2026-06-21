@@ -1,0 +1,6 @@
+{
+  "name": "M4DiTV Lite",
+  "description": "Aplikasi IPTV Lite modern, premium, dan ultra ringan untuk Android & Android TV.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
