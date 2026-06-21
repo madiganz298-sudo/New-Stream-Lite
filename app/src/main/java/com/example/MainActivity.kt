@@ -20,6 +20,9 @@ import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 
 class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener {
 
@@ -36,6 +39,10 @@ class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener 
     private var currentTabPosition = 0 // 0 for All, 1 for Favorites
     
     private var activeAddDialog: AddPlaylistDialog? = null
+
+    private var activeFilterStatus: ChannelStatus? = null // null means "Semua", or ONLINE, OFFLINE, UNKNOWN
+    private var isCurrentlyValidating = false
+    private var validationJob: kotlinx.coroutines.Job? = null
 
     // Register file browser contracting
     private val browseFileLauncher = registerForActivityResult(
@@ -69,6 +76,7 @@ class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener 
         setupSearch()
         setupListeners()
         setupTabs()
+        setupValidatorPanel()
 
         // Load cached playlist or fetch default
         loadInitialData()
@@ -184,6 +192,7 @@ class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener 
             fetchDefaultPlaylist()
         } else {
             refreshDisplayList()
+            updateValidatorStats()
         }
     }
 
@@ -212,6 +221,7 @@ class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener 
                     
                     showContentLayout()
                     refreshDisplayList()
+                    updateValidatorStats()
                 } else {
                     showErrorLayout(getString(R.string.invalid_m3u))
                 }
@@ -234,6 +244,11 @@ class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener 
                 it.name.lowercase().contains(searchFilter) ||
                         it.group.lowercase().contains(searchFilter)
             }
+        }
+
+        // Apply Channel Status Validation filter if selected
+        if (activeFilterStatus != null) {
+            list = list.filter { it.status == activeFilterStatus }
         }
 
         // Limit maximum size of initial rendering to 500 items for memory headroom
@@ -294,6 +309,7 @@ class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener 
                     allChannels = playlistManager.getAllChannels()
                     showContentLayout()
                     refreshDisplayList()
+                    updateValidatorStats()
                     Toast.makeText(this@MainActivity, getString(R.string.playlist_added_success), Toast.LENGTH_SHORT).show()
                 } else {
                     showContentLayout()
@@ -318,6 +334,7 @@ class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener 
                 
                 allChannels = playlistManager.getAllChannels()
                 refreshDisplayList()
+                updateValidatorStats()
                 Toast.makeText(this@MainActivity, getString(R.string.playlist_added_success), Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this@MainActivity, getString(R.string.invalid_m3u), Toast.LENGTH_SHORT).show()
@@ -348,6 +365,7 @@ class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener 
                     allChannels = playlistManager.getAllChannels()
                     showContentLayout()
                     refreshDisplayList()
+                    updateValidatorStats()
                     Toast.makeText(this@MainActivity, getString(R.string.playlist_added_success), Toast.LENGTH_SHORT).show()
                 } else {
                     showContentLayout()
@@ -358,6 +376,175 @@ class MainActivity : AppCompatActivity(), AddPlaylistDialog.AddPlaylistListener 
                 Toast.makeText(this@MainActivity, "Gagal membaca file: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun setupValidatorPanel() {
+        updateFilterChipsUI()
+        updateValidatorStats()
+
+        binding.chipFilterAll.setOnClickListener {
+            activeFilterStatus = null
+            updateFilterChipsUI()
+            refreshDisplayList()
+        }
+
+        binding.chipFilterOnline.setOnClickListener {
+            activeFilterStatus = ChannelStatus.ONLINE
+            updateFilterChipsUI()
+            refreshDisplayList()
+        }
+
+        binding.chipFilterOffline.setOnClickListener {
+            activeFilterStatus = ChannelStatus.OFFLINE
+            updateFilterChipsUI()
+            refreshDisplayList()
+        }
+
+        binding.chipFilterUnchecked.setOnClickListener {
+            activeFilterStatus = ChannelStatus.UNKNOWN
+            updateFilterChipsUI()
+            refreshDisplayList()
+        }
+
+        binding.btnStartValidation.setOnClickListener {
+            startChannelValidation()
+        }
+    }
+
+    private fun updateFilterChipsUI() {
+        val selectedBg = R.drawable.chip_bg_selected
+        val unselectedBg = R.drawable.chip_bg_unselected
+
+        val blackColor = ContextCompat.getColor(this, R.color.black)
+        val textSecondaryColor = ContextCompat.getColor(this, R.color.text_secondary)
+
+        binding.chipFilterAll.apply {
+            if (activeFilterStatus == null) {
+                setBackgroundResource(selectedBg)
+                setTextColor(blackColor)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+            } else {
+                setBackgroundResource(unselectedBg)
+                setTextColor(textSecondaryColor)
+                setTypeface(null, android.graphics.Typeface.NORMAL)
+            }
+        }
+        binding.chipFilterOnline.apply {
+            if (activeFilterStatus == ChannelStatus.ONLINE) {
+                setBackgroundResource(selectedBg)
+                setTextColor(blackColor)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+            } else {
+                setBackgroundResource(unselectedBg)
+                setTextColor(textSecondaryColor)
+                setTypeface(null, android.graphics.Typeface.NORMAL)
+            }
+        }
+        binding.chipFilterOffline.apply {
+            if (activeFilterStatus == ChannelStatus.OFFLINE) {
+                setBackgroundResource(selectedBg)
+                setTextColor(blackColor)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+            } else {
+                setBackgroundResource(unselectedBg)
+                setTextColor(textSecondaryColor)
+                setTypeface(null, android.graphics.Typeface.NORMAL)
+            }
+        }
+        binding.chipFilterUnchecked.apply {
+            if (activeFilterStatus == ChannelStatus.UNKNOWN) {
+                setBackgroundResource(selectedBg)
+                setTextColor(blackColor)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+            } else {
+                setBackgroundResource(unselectedBg)
+                setTextColor(textSecondaryColor)
+                setTypeface(null, android.graphics.Typeface.NORMAL)
+            }
+        }
+    }
+
+    private fun updateValidatorStats() {
+        if (allChannels.isEmpty()) {
+            binding.txtValidatorStats.text = "Validasi channel untuk memilah link aktif."
+            binding.btnStartValidation.visibility = View.GONE
+            return
+        }
+        binding.btnStartValidation.visibility = View.VISIBLE
+
+        val total = allChannels.size
+        val online = allChannels.count { it.status == ChannelStatus.ONLINE }
+        val offline = allChannels.count { it.status == ChannelStatus.OFFLINE }
+        val unchecked = allChannels.count { it.status == ChannelStatus.UNKNOWN }
+
+        binding.txtValidatorStats.text = "Total: $total | 🟢 $online | 🔴 $offline | ⚪ $unchecked"
+
+        if (isCurrentlyValidating) {
+            binding.btnStartValidation.text = "Batal"
+            val errorColor = ContextCompat.getColor(this, R.color.color_error)
+            val whiteColor = ContextCompat.getColor(this, R.color.white)
+            binding.btnStartValidation.backgroundTintList = android.content.res.ColorStateList.valueOf(errorColor)
+            binding.btnStartValidation.setTextColor(whiteColor)
+        } else {
+            binding.btnStartValidation.text = "Pindai"
+            val goldColor = ContextCompat.getColor(this, R.color.gold)
+            val blackColor = ContextCompat.getColor(this, R.color.black)
+            binding.btnStartValidation.backgroundTintList = android.content.res.ColorStateList.valueOf(goldColor)
+            binding.btnStartValidation.setTextColor(blackColor)
+        }
+    }
+
+    private fun startChannelValidation() {
+        if (isCurrentlyValidating) {
+            cancelChannelValidation()
+            return
+        }
+
+        if (allChannels.isEmpty()) return
+
+        isCurrentlyValidating = true
+        updateValidatorStats()
+
+        validationJob = lifecycleScope.launch {
+            val channelsToValidate = allChannels.toList()
+            val chunkSize = 8 // Concurrently validate 8 channels at a time
+            
+            for (chunk in channelsToValidate.chunked(chunkSize)) {
+                if (!isCurrentlyValidating) break
+
+                val checkDeferreds = chunk.map { channel ->
+                    async(Dispatchers.Default) {
+                        if (!isCurrentlyValidating) return@async
+                        val isOnline = Utils.checkStreamOnline(channel.streamUrl)
+                        channel.status = if (isOnline) ChannelStatus.ONLINE else ChannelStatus.OFFLINE
+
+                        withContext(Dispatchers.Main) {
+                            val index = displayedChannels.indexOfFirst { it.id == channel.id }
+                            if (index != -1) {
+                                adapter.notifyItemChanged(index)
+                            }
+                            updateValidatorStats()
+                        }
+                    }
+                }
+                checkDeferreds.awaitAll()
+            }
+
+            isCurrentlyValidating = false
+            validationJob = null
+            updateValidatorStats()
+            refreshDisplayList()
+            Toast.makeText(this@MainActivity, "Pemindaian selesai!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun cancelChannelValidation() {
+        isCurrentlyValidating = false
+        validationJob?.cancel()
+        validationJob = null
+        updateValidatorStats()
+        refreshDisplayList()
+        Toast.makeText(this, "Pemindaian dibatalkan.", Toast.LENGTH_SHORT).show()
     }
 
     private suspend fun readFileFromUri(uri: Uri): String = withContext(Dispatchers.IO) {

@@ -48,6 +48,19 @@ class ChannelAdapter(
 
             updateFavoriteState(channel)
 
+            // Update Status Dot background based on channel status
+            when (channel.status) {
+                ChannelStatus.ONLINE -> {
+                    binding.imgStatusDot.setBackgroundResource(R.drawable.circle_status_online)
+                }
+                ChannelStatus.OFFLINE -> {
+                    binding.imgStatusDot.setBackgroundResource(R.drawable.circle_status_offline)
+                }
+                ChannelStatus.UNKNOWN -> {
+                    binding.imgStatusDot.setBackgroundResource(R.drawable.circle_status_unchecked)
+                }
+            }
+
             // Click listener
             binding.root.setOnClickListener {
                 onChannelClick(channel)
@@ -81,11 +94,11 @@ class ChannelAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Channel, newItem: Channel): Boolean {
-            return oldItem == newItem
+            return oldItem == newItem && oldItem.status == newItem.status
         }
 
         override fun getChangePayload(oldItem: Channel, newItem: Channel): Any? {
-            return "FAVORITE_CHANGE" // optimization payoff
+            return null // Trigger full bind for perfect reliability
         }
     }
 }

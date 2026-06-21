@@ -49,4 +49,39 @@ object Utils {
             null
         }
     }
+
+    suspend fun checkStreamOnline(url: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url(url)
+                .head()
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 IPTV")
+                .build()
+            val checkClient = client.newBuilder()
+                .connectTimeout(4, TimeUnit.SECONDS)
+                .readTimeout(4, TimeUnit.SECONDS)
+                .build()
+            checkClient.newCall(request).execute().use { response ->
+                val code = response.code
+                code in 200..399 || code == 401 || code == 403 || code == 405
+            }
+        } catch (e: Exception) {
+            try {
+                val getRequest = Request.Builder()
+                    .url(url)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 IPTV")
+                    .build()
+                val checkClient = client.newBuilder()
+                    .connectTimeout(3, TimeUnit.SECONDS)
+                    .readTimeout(3, TimeUnit.SECONDS)
+                    .build()
+                checkClient.newCall(getRequest).execute().use { response ->
+                    val code = response.code
+                    code in 200..399 || code == 401 || code == 403
+                }
+            } catch (e2: Exception) {
+                false
+            }
+        }
+    }
 }
